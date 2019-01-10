@@ -7,15 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.SilirdCo.TemplateProject.Confuse.ConfuseException;
 import ru.SilirdCo.TemplateProject.Confuse.ConfuseStarter;
+import ru.SilirdCo.TemplateProject.Util.Factories.FrameFactory;
 import ru.SilirdCo.TemplateProject.Util.FileUtil;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class MainFrameController implements Initializable {
     @SuppressWarnings("unused")
@@ -70,20 +70,25 @@ public class MainFrameController implements Initializable {
                 int depth = intDepth.getInteger();
 
                 ConfuseStarter confuseStarter = new ConfuseStarter(file, depth);
-                try {
-                    confuseStarter.start();
-                }
-                catch (IOException | ConfuseException ex) {
-                    sendWarn(ex.getMessage());
-                }
+                CompletableFuture<Void> completeFuture = new CompletableFuture<>();
+                FrameFactory.getInstance().getProgressFrame(confuseStarter.progressProperty(), completeFuture);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        confuseStarter.start();
+                    }
+                    catch (IOException | ConfuseException ex) {
+                        JavaFXLaunch.getInstance().sendWarn(ex.getMessage());
+                    }
 
-                sendInfo("======================================\n" +
-                        "======================================\n" +
-                        "ВНИМАНИЕ!\n" +
-                        "======================================\n" +
-                        "======================================\n" +
-                        "Запомните ключ, по которому только вы сможете найти файл, иначе пранк может выйти из под контроля!\n" +
-                        "Ключ поиска: " + confuseStarter.getKey());
+                    JavaFXLaunch.getInstance().sendInfo("======================================\n" +
+                            "======================================\n" +
+                            "ВНИМАНИЕ!\n" +
+                            "======================================\n" +
+                            "======================================\n" +
+                            "Запомните ключ, по которому только вы сможете найти файл, иначе пранк может выйти из под контроля!\n" +
+                            "Ключ поиска: " + confuseStarter.getKey());
+                    completeFuture.complete(null);
+                });
             }
         });
     }
@@ -123,22 +128,7 @@ public class MainFrameController implements Initializable {
     }
 
     private void showInfo() {
-        sendInfo("Важное отступление, разработчик и дистрибьютер не несёт ответственности за действия этой программы, все действия вы проводите на свой страх и риск.\n" +
+        JavaFXLaunch.getInstance().sendInfo("Важное отступление, разработчик и дистрибьютер не несёт ответственности за действия этой программы, все действия вы проводите на свой страх и риск.\n" +
                 "Эта программа чисто для пранков и розыгрышей своих знакомых, всё что вам надо это получить доступ к компьютеру вашей цели, запустить эту программу, ввести необходимые данные и произвести запуск. После этого можете наслаждаться последствием пранка, только осторожней, вас могут уебать.");
-    }
-
-    private void sendInfo(String text) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, text);
-        alert.showAndWait();
-    }
-
-    private void sendWarn(String text) {
-        Alert alert = new Alert(Alert.AlertType.WARNING, text);
-        alert.showAndWait();
-    }
-
-    private void sendError(String text) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, text);
-        alert.showAndWait();
     }
 }

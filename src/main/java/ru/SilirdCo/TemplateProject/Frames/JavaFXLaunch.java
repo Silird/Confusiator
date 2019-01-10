@@ -4,12 +4,13 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.SilirdCo.TemplateProject.Util.Factories.FrameFactory;
+import ru.SilirdCo.TemplateProject.Util.Factories.PanelFactory;
 
 import java.util.Stack;
 
@@ -38,7 +39,7 @@ public class JavaFXLaunch extends Application {
     public void start(Stage primaryStage) throws Exception {
         instance = this;
 
-        Node mainFrameNode = FrameFactory.getInstance()
+        Node mainFrameNode = PanelFactory.getInstance()
                 .getMainPanel();
 
         stage = primaryStage;
@@ -57,12 +58,7 @@ public class JavaFXLaunch extends Application {
     }
 
     public void showWindow(Node node) {
-        if (Platform.isFxApplicationThread()) {
-            addNodeSave(node);
-        }
-        else {
-            Platform.runLater(() -> addNodeSave(node));
-        }
+        runInJavaFXThread(() -> addNodeSave(node));
     }
 
     private void addNodeSave(Node node) {
@@ -109,9 +105,41 @@ public class JavaFXLaunch extends Application {
     }
 
     public void closeWindow() {
-        if (stackFrames.peek() == activeNode) {
-            stackFrames.pop();
-            addNode(stackFrames.peek());
+        runInJavaFXThread(() -> {
+            if (stackFrames.peek() == activeNode) {
+                stackFrames.pop();
+                addNode(stackFrames.peek());
+            }
+        });
+    }
+
+    public void sendInfo(String text) {
+        runInJavaFXThread(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, text);
+            alert.showAndWait();
+        });
+    }
+
+    public void sendWarn(String text) {
+        runInJavaFXThread(() -> {
+            Alert alert = new Alert(Alert.AlertType.WARNING, text);
+            alert.showAndWait();
+        });
+    }
+
+    public void sendError(String text) {
+        runInJavaFXThread(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR, text);
+            alert.showAndWait();
+        });
+    }
+
+    public static void runInJavaFXThread(Runnable runnable) {
+        if (Platform.isFxApplicationThread()) {
+            runnable.run();
+        }
+        else {
+            Platform.runLater(runnable);
         }
     }
 }

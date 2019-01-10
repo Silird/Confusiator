@@ -1,14 +1,12 @@
 package ru.SilirdCo.TemplateProject.Util.Factories;
 
-import javafx.fxml.FXMLLoader;
+import javafx.beans.property.DoubleProperty;
 import javafx.scene.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.SilirdCo.TemplateProject.Frames.EmptyPanel;
-import ru.SilirdCo.TemplateProject.Frames.MainFrameController;
-import ru.SilirdCo.TemplateProject.Util.ExceptionHandler;
+import ru.SilirdCo.TemplateProject.Frames.JavaFXLaunch;
 
-import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 public class FrameFactory {
     private final static Logger logger = LoggerFactory.getLogger(FrameFactory.class);
@@ -22,19 +20,19 @@ public class FrameFactory {
         return instance;
     }
 
-    public Node getMainPanel() {
-        Node content;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/Frames/MainFrame.fxml"));
-        MainFrameController controller = new MainFrameController();
-        loader.setController(controller);
-        try {
-            content = loader.load();
-        }
-        catch (IOException ex) {
-            ExceptionHandler.handle(logger, ex);
-            content = EmptyPanel.get();
-        }
+    public void getMainFrame() {
+        Node content = PanelFactory.getInstance()
+                .getMainPanel();
 
-        return content;
+        JavaFXLaunch.getInstance()
+                .showWindow(content);
+    }
+
+    public void getProgressFrame(DoubleProperty progressProperty, CompletableFuture<Void> completeFuture) {
+        Node content = PanelFactory.getInstance()
+                .getProgressPanel(progressProperty, completeFuture);
+
+        JavaFXLaunch.getInstance()
+                .showWindow(content);
     }
 }

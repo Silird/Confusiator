@@ -1,6 +1,11 @@
 package ru.SilirdCo.TemplateProject.Confuse;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import ru.SilirdCo.TemplateProject.Util.FileUtil;
+import ru.SilirdCo.TemplateProject.Util.VarUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +24,11 @@ public class ConfuseStarter {
 
     private String shadeContent;
 
+    private long progressParts = 1;
+    private double progressDelta = 0;
+
+    private DoubleProperty progressProp = null;
+
     public ConfuseStarter(File target, int depth) {
         this.target = target;
         this.depth = depth;
@@ -32,6 +42,8 @@ public class ConfuseStarter {
             throw new ConfuseException("Глубина поиска должна быть больше 0");
         }
 
+        progressParts = calculateProgressParts();
+        initProgress();
         startPath = target.getParentFile();
         key = createKey();
         shadeContent = createShadeContent(target.length());
@@ -52,6 +64,7 @@ public class ConfuseStarter {
                 File shadedFile = new File(currentPath.getAbsolutePath() + File.separator + UUID.randomUUID());
                 FileUtil.writeText(shadedFile, shadeContent);
             }
+            progressBump();
         }
         else {
             remainingDepth--;
@@ -85,6 +98,27 @@ public class ConfuseStarter {
         return stringBuilder.toString();
     }
 
+    private long calculateProgressParts() {
+        int alphabetLength = possibleChars.length;
+        long parts = alphabetLength;
+        for (int i = 1; i < depth; i++) {
+            parts = parts*alphabetLength;
+        }
+
+        return parts;
+    }
+
+    private void initProgress() {
+        progressProperty().setValue(0);
+        progressDelta = 1d/progressParts;
+    }
+
+    private void progressBump() {
+        double currentProgress = VarUtils.getDouble(progressProperty().getValue());
+        currentProgress += progressDelta;
+        progressProperty().setValue(currentProgress);
+    }
+
     public static boolean isPossible(char ch) {
         for (char c : possibleChars) {
             if (ch == c) {
@@ -93,6 +127,15 @@ public class ConfuseStarter {
         }
 
         return false;
+    }
+
+    public final DoubleProperty progressProperty() {
+        if (progressProp == null) {
+            progressProp = new SimpleDoubleProperty();
+            progressProp.setValue(null);
+
+        }
+        return progressProp;
     }
 
     public File getStartPath() {
